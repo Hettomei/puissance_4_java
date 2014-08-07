@@ -8,9 +8,14 @@ public class Start {
    * @param args
    * @throws Exception
    */
+  private static Fenetre f = null;
+
   public static void main(String[] args) throws Exception {
-    Fenetre f = new Fenetre();
+    f = new Fenetre();
     f.setVisible(true);
   }
 
+  public static Fenetre getFenetre(){
+    return f;
+  }
 }

@@ -2,19 +2,18 @@ package model;
 
 public class Case {
 
-  public static final int INACTIF = 0;
-  private int appartientA;
+  private Joueur appartientA;
 
   public Case(){
-    appartientA = INACTIF;
+    appartientA = null;
   }
 
-  public int getAppartientA() {
+  public Joueur getAppartientA() {
     return appartientA;
   }
 
-  public void setAppartientA(int i) {
-    this.appartientA = i;
+  public void setAppartientA(Joueur j) {
+    this.appartientA = j;
   }
 
   public String toString(){

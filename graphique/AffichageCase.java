@@ -18,7 +18,7 @@ public class AffichageCase extends JButton implements MouseListener, Observer{
   private static final long serialVersionUID = -8301360324279214401L;
   private static final Color COULEUR_INACTIF =  Color.WHITE;
   //Avec ces couleurs : seul 7 joueurs max;
-  private Color couleur[] = {COULEUR_INACTIF, Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Color.PINK, Color.BLACK, Color.CYAN} ;
+  private Color couleur[] = {Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Color.PINK, Color.BLACK, Color.CYAN} ;
   private GrilleCase gc ;
   private int column;
   private int row;
@@ -32,7 +32,7 @@ public class AffichageCase extends JButton implements MouseListener, Observer{
     this.gc = gc;
     this.column = column;
     this.row = ligne;
-    this.setBackground(couleur[0]); // Couleur vide
+    this.setBackground(COULEUR_INACTIF); // Couleur vide
     gc.addObserver(this);
   }
 
@@ -47,7 +47,7 @@ public class AffichageCase extends JButton implements MouseListener, Observer{
 
   @Override
   public void mouseEntered(MouseEvent arg0) {
-    setBgColor((gc.getJoueurEnCours()));
+    setBgColor((gc.getJoueurEnCours().getID()));
   }
 
   @Override
@@ -67,17 +67,17 @@ public class AffichageCase extends JButton implements MouseListener, Observer{
   }
 
   private void getGoodColorForThisCase(GrilleCase grille) {
-    try {
-      setBgColor(grille.getEtat(column, row));
-    } catch (Exception e) {
-      Tools.P(e.getMessage());
+    if(grille.getEtat(column, row) != null){
+      setBgColor(grille.getEtat(column, row).getID());
+    }else{
+      this.setBackground(COULEUR_INACTIF);
     }
   }
 
   private void setBgColor(int i) {
     Color temp;
     //7 nombre de couleur definis par defaut, apres on calcul
-    if (i <= 7){
+    if (i < 7){
       temp = couleur[i];
     }else{
       temp = customColorByIdJoueur(i);

@@ -3,10 +3,7 @@ package graphique;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -57,9 +54,8 @@ public class Fenetre extends JFrame {
 
     JPanel zoneInfosW = new JPanel();
     zoneInfosW.setBackground(COULEUR_BG);
-    JButton newPart = new JButton("Nouvelle Partie");
-    newPart.addActionListener(new BtnNouvellePartie());
-    zoneInfosW.add(newPart);
+    zoneInfosW.add(new AffichageModifJeu(gc));
+
 
     zonePrincipale.add(zoneInfosN, BorderLayout.NORTH);
     zonePrincipale.add(zoneInfosS, BorderLayout.SOUTH);
@@ -84,14 +80,4 @@ public class Fenetre extends JFrame {
     }
   }
 
-  class BtnNouvellePartie implements ActionListener{
-
-    /**
-     * Redéfinition de la méthode actionPerformed
-     */
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      gc.nouvellePartie();
-    }
-  }
 }

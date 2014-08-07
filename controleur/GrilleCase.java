@@ -2,14 +2,17 @@ package controleur;
 
 import init.Tools;
 
+import java.util.ArrayList;
 import java.util.Observable;
 
 import model.Case;
-import model.StatJoueur;
+import model.Joueur;
 
 public class GrilleCase extends Observable{
-  private static final int DEFAULT_COLUMN = 10;
-  private static final int DEFAULT_ROWS = 10;
+
+  private static final int DEFAULT_COLUMN 			= 10;
+  private static final int DEFAULT_ROWS 				= 10;
+  private static final int NB_CASE_POUR_GAGNER_DEFAUT = 4;
 
   private Case lesCase[][];
 
@@ -20,60 +23,65 @@ public class GrilleCase extends Observable{
 
   private int joueurEnCours;
 
-  private int winner;
+  private Joueur winner;
 
 
-  private StatJoueur [] joueurs ;
+  private ArrayList<Joueur> joueurs ;
 
 
   public GrilleCase(){
-    this.nbColumns = DEFAULT_COLUMN;
-    this.nbRows = DEFAULT_ROWS;
-    this.lesCase = new Case[nbColumns][nbRows];
-    this.joueurEnCours = 1;
-    this.nbJoueurs = 2;
-    this.winner = 0;
-    this.nbCasePourGagner = 4;
-    initJoueurs();
+    initColumnsRowGrille(DEFAULT_COLUMN, DEFAULT_ROWS);
+    this.nbCasePourGagner = NB_CASE_POUR_GAGNER_DEFAUT;
+    initJoueurs(2);
     initGrid();
   }
 
 
   public GrilleCase(int columns, int rows, int nbJoueurs){
+    initColumnsRowGrille(columns, rows);
+    this.nbCasePourGagner = NB_CASE_POUR_GAGNER_DEFAUT;
+    initJoueurs(nbJoueurs);
+    initGrid();
+  }
+
+
+  private void initColumnsRowGrille(int columns, int rows) {
     this.nbColumns = (columns > 0 ? columns : DEFAULT_COLUMN);
     this.nbRows = (rows > 0 ? rows : DEFAULT_ROWS);
     this.lesCase = new Case[nbColumns][nbRows];
-    this.joueurEnCours = 1;
-    this.nbJoueurs = (nbJoueurs > 0 ? nbJoueurs : 1);
-    this.winner = 0;
-    this.nbCasePourGagner = 3;
-    initJoueurs();
-    initGrid();
   }
 
   public int getNbJoueur() {
     return nbJoueurs;
   }
 
-  public int getWinner() {
+  public Joueur getWinner() {
     return winner;
   }
 
-  private void initJoueurs() {
-    joueurs = new StatJoueur[nbJoueurs+1]; //On demarrera a l'indice 1
-    for (int i = 1 ; i <= nbJoueurs; i++){
-      joueurs[i] = new StatJoueur();
+  private void initJoueurs(int nbJoueurs) {
+    this.winner = null;
+    this.joueurEnCours = 0;
+    this.nbJoueurs = (nbJoueurs > 0 ? nbJoueurs : 1);
+    this.joueurs = new ArrayList<Joueur>();
+    for (int i = 0 ; i < this.nbJoueurs; i++){
+      this.joueurs.add(new Joueur());
     }
   }
 
-  public StatJoueur getStatJoueur(int numeroJoueur){
-    if (numeroJoueur < 1 || numeroJoueur > nbJoueurs)
-      return null;
-    return joueurs[numeroJoueur];
+  public void ajouterUnJoueur() {
+    this.nbJoueurs++;
+    this.joueurs.add(new Joueur());
   }
 
-  public int getJoueurEnCours(){
-    return joueurEnCours;
+  public Joueur getStatJoueur(int numeroJoueur){
+    if (numeroJoueur < 0 || numeroJoueur >= nbJoueurs)
+      return null;
+    return joueurs.get(numeroJoueur);
+  }
+
+  public Joueur getJoueurEnCours(){
+    return joueurs.get(joueurEnCours);
   }
 
   private void initGrid(){
@@ -98,26 +106,30 @@ public class GrilleCase extends Observable{
    * Active la case la plus basse de la colonne
    * Ici on fait tous les tests et mise à jour
    */
-  public void setActif(int colonne) throws Exception {
-    checkColumnError(colonne);
+  public void setActif(int colonne) {
+    try {
+      checkColumnError(colonne);
+      boolean flag = true;
+      int ligne = nbRows - 1;
 
-    boolean flag = true;
-    int ligne = nbRows - 1;
-
-    //on parcours toutes les cases. De bas en haut
-    //on active la case la plus basse non activée tel un puissance 4 physique
-    while(flag && ligne >= 0){
-      if(lesCase[colonne][ligne].getAppartientA() == Case.INACTIF){
-        flag = false;
-        lesCase[colonne][ligne].setAppartientA(joueurEnCours);
-        Tools.P("La case " + "c"+ colonne + "-l" + ligne + " appartient a Joueur " + lesCase[colonne][ligne]);
-        ajouterCoupJoueurEnCour();
-        checkIfWinner(colonne, ligne);
-        avancerJoueurEnCour();
-        setChanged();
-        notifyObservers();
+      //on parcours toutes les cases. De bas en haut
+      //on active la case la plus basse non activée tel un puissance 4 physique
+      while(flag && ligne >= 0){
+        if(lesCase[colonne][ligne].getAppartientA() == null){
+          flag = false;
+          lesCase[colonne][ligne].setAppartientA(joueurs.get(joueurEnCours));
+          Tools.P("La case " + "c"+ colonne + "-l" + ligne + " appartient a Joueur " + lesCase[colonne][ligne]);
+          ajouterCoupJoueurEnCour();
+          checkIfWinner(colonne, ligne);
+          avancerJoueurEnCour();
+          setChanged();
+          notifyObservers();
+        }
+        ligne--;
       }
-      ligne--;
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 
@@ -127,7 +139,7 @@ public class GrilleCase extends Observable{
    */
   //TODO : améliorer ce truc
   private void checkIfWinner(int colonne, int ligne) {
-    int joueurCaseInitiale = lesCase[colonne][ligne].getAppartientA();
+    Joueur joueurCaseInitiale = lesCase[colonne][ligne].getAppartientA();
     int nbCaseMemeJoueur = 0;
 
     //On regarde toute la ligne donc on deplace la colonne
@@ -142,7 +154,7 @@ public class GrilleCase extends Observable{
       nbCaseMemeJoueur += checkLigneColonneDiag(colonne, ligne + 1, 0,  1, joueurCaseInitiale);
       nbCaseMemeJoueur++; //add the first case;
       if (!updateIfWinner(joueurCaseInitiale, nbCaseMemeJoueur)){
-        //Test de diagonal de hau gauche vers bas droite
+        //Test de diagonal de haut gauche vers bas droite
         nbCaseMemeJoueur  = checkLigneColonneDiag(colonne - 1, ligne - 1, -1, -1, joueurCaseInitiale);
         nbCaseMemeJoueur += checkLigneColonneDiag(colonne + 1, ligne + 1,  1,  1, joueurCaseInitiale);
         nbCaseMemeJoueur++; //add the first case;
@@ -153,24 +165,16 @@ public class GrilleCase extends Observable{
           nbCaseMemeJoueur++; //add the first case;
           updateIfWinner(joueurCaseInitiale, nbCaseMemeJoueur);
 
-        }else{
-          return;
         }
-      }else{
-        return;
       }
     }
-    else{
-      return;
-    }
-
   }
 
   /*
    * Si il y a un gagnant : on met a jour les stats et on affiche le message et on renvoie TRUE
    * Sinon on renvoit false
    */
-  private boolean updateIfWinner(int joueurCaseInitiale, int nbCaseMemeJoueur) {
+  private boolean updateIfWinner(Joueur joueurCaseInitiale, int nbCaseMemeJoueur) {
     if (nbCaseMemeJoueur >= nbCasePourGagner){
       miseAJourGagnantPerdant(joueurCaseInitiale);
       winner = joueurCaseInitiale ;
@@ -180,7 +184,7 @@ public class GrilleCase extends Observable{
     return false;
   }
 
-  private int checkLigneColonneDiag(int colonne, int ligne, int stepCol, int stepRow, int joueurAChecker){
+  private int checkLigneColonneDiag(int colonne, int ligne, int stepCol, int stepRow, Joueur joueurAChecker){
 
     boolean flag = true;
     int nbCaseMemeJoueur = 0;
@@ -197,17 +201,18 @@ public class GrilleCase extends Observable{
 
     return nbCaseMemeJoueur;
   }
-  private void miseAJourGagnantPerdant(int joueurGagnant) {
-    joueurs[joueurGagnant].setNbWinPlus1();
-    for (int i = 1 ; i <= nbJoueurs; i++){
-      if(i != joueurGagnant)
-        joueurs[i].setNbLoosePlus1();
+
+  private void miseAJourGagnantPerdant(Joueur joueurGagnant) {
+    joueurGagnant.setNbWinPlus1();
+    for (int i = 0 ; i < nbJoueurs; i++){
+      if(joueurs.get(i) != joueurGagnant)
+        joueurs.get(i).setNbLoosePlus1();
     }
   }
 
 
   private void ajouterCoupJoueurEnCour() {
-    joueurs[joueurEnCours].setNbCoupsPlus1();
+    joueurs.get(joueurEnCours).setNbCoupsPlus1();
   }
 
   /*
@@ -215,8 +220,8 @@ public class GrilleCase extends Observable{
    */
   private void avancerJoueurEnCour() {
     joueurEnCours++;
-    if (joueurEnCours > nbJoueurs){
-      joueurEnCours = 1;
+    if (joueurEnCours >= nbJoueurs){
+      joueurEnCours = 0;
     }
   }
 
@@ -226,24 +231,27 @@ public class GrilleCase extends Observable{
     }
   }
 
-  private boolean checkValidColRow(int column, int row) throws Exception{
+  private boolean checkValidColRow(int column, int row){
     if (column < 0 || column >= this.nbColumns || row < 0 || row >= this.nbRows){
-      throw new Exception("Aucune case existante pour c" + column + " l" + row);
+      Tools.P("Aucune case existante pour c" + column + " l" + row);
+      return false;
     }
     return true;
   }
 
   /*
-   * Renvoie 0 si inactif. Sinon renvoie l'ID du joueur possédant la case
+   * Renvoie null si inactif. Sinon renvoie l'ID du joueur possédant la case
    */
-  public int getEtat(int col, int row) throws Exception {
-    checkValidColRow(col, row);
-    return lesCase[col][row].getAppartientA();
+  public Joueur getEtat(int col, int row){
+    if(checkValidColRow(col, row)){
+      return lesCase[col][row].getAppartientA();
+    }
+    return null;
   }
 
   public void nouvellePartie() {
     this.lesCase = new Case[nbColumns][nbRows];
-    this.joueurEnCours = 1;
+    this.joueurEnCours = 0;
     initGrid();
     setChanged();
     notifyObservers();
