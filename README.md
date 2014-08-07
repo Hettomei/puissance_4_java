@@ -20,6 +20,9 @@ cd bin
 java init.Start
 ```
 
+# ScreenShot
+![demo](demo/screenshot.png)
+
 # Other
 
 It was coded in french.. Sorry
